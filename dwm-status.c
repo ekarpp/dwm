@@ -43,6 +43,21 @@ unsigned int get_GPU_temp(nvmlDevice_t *device)
     return temp;
 }
 
+unsigned int get_CPU_temp()
+{
+    const char *path = "/sys/class/thermal/thermal_zone2/temp";
+    char line[16];
+
+    FILE *fd = fopen(path, "r");
+    if (fd == NULL)
+        return 0;
+
+    if (fgets(line, sizeof(line)-1, fd) == NULL)
+        return 0;
+
+    return atoi(line) / 1000;
+}
+
 char *get_time(void)
 {
     time_t rawtime;
@@ -90,6 +105,7 @@ int main(int argc, char *argv[])
     struct syst_stats *sys = malloc(sizeof(struct syst_stats));
     memset(sys, 0, sizeof(struct syst_stats));
     unsigned int GPU_temp;
+    unsigned int CPU_temp;
     char status[STATUS_LEN];
 
     while (1)
@@ -97,8 +113,11 @@ int main(int argc, char *argv[])
         time = get_time();
         set_sysinfo(sys);
         GPU_temp = get_GPU_temp(&device);
+        CPU_temp = get_CPU_temp();
+
         snprintf(status, STATUS_LEN - 1,
-                 "TG: %uC M: %.2fGiB L: %.2f %.2f %.2f %s",
+                 "TC: %uC TG: %uC M: %.2fGiB L: %.2f %.2f %.2f %s",
+                 CPU_temp,
                  GPU_temp,
                  sys->free_ram,
                  sys->load1, sys->load5, sys->load15,
