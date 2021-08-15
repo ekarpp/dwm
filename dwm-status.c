@@ -12,23 +12,23 @@
 #define STATUS_LEN 256
 #define LOAD_SCALE 1.0d / (1 << SI_LOAD_SHIFT)
 
-char *get_sysinfo(void)
+struct syst_stats {
+    double free_ram; // in GiB
+    double load1;
+    double load5;
+    double load15;
+};
+
+void set_sysinfo(struct syst_stats *sys)
 {
-    struct sysinfo *info;
-    char *ret = malloc(LEN);
-    ret[0] = '\0';
+    struct sysinfo info;
+    if (sysinfo(&info) < 0)
+        return;
 
-    if (sysinfo(info) < 0)
-        return ret;
-
-    snprintf(ret, LEN - 1, "M: %.2f GiB L: %.2f %.2f %.2f",
-             (double) info->freeram / (1 << 30),
-             info->loads[0] * LOAD_SCALE,
-             info->loads[1] * LOAD_SCALE,
-             info->loads[2] * LOAD_SCALE
-        );
-
-    return ret;
+    sys->free_ram = (double) info.freeram / (1 << 30);
+    sys->load1    = info.loads[0] * LOAD_SCALE;
+    sys->load5    = info.loads[1] * LOAD_SCALE;
+    sys->load15   = info.loads[2] * LOAD_SCALE;
 }
 
 unsigned int get_GPU_temp(nvmlDevice_t *device)
@@ -87,29 +87,31 @@ int main(int argc, char *argv[])
     }
 
     char *time;
-    char *sys;
+    struct syst_stats *sys = malloc(sizeof(struct syst_stats));
+    memset(sys, 0, sizeof(struct syst_stats));
     unsigned int GPU_temp;
     char status[STATUS_LEN];
 
     while (1)
     {
         time = get_time();
-        sys = get_sysinfo();
+        set_sysinfo(sys);
         GPU_temp = get_GPU_temp(&device);
-        snprintf(status, STATUS_LEN - 1, "%s %s %s",
+        snprintf(status, STATUS_LEN - 1,
+                 "TG: %uC M: %.2fGiB L: %.2f %.2f %.2f %s",
                  GPU_temp,
-                 sys, time
+                 sys->free_ram,
+                 sys->load1, sys->load5, sys->load15,
+                 time
             );
 
         XStoreName(dpy, win, status);
         XFlush(dpy);
 
-        free(GPU_temp);
         free(time);
-        free(sys);
         sleep(60);
     }
-
+    free(sys);
     return 0;
 }
 
