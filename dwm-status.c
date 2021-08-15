@@ -58,21 +58,18 @@ unsigned int get_CPU_temp()
     return atoi(line) / 1000;
 }
 
-char *get_time(void)
+void set_time(char *datetime)
 {
     time_t rawtime;
     struct tm *timeinfo;
-    char *ret = malloc(LEN);
-    ret[0] = '\0';
 
     time(&rawtime);
     timeinfo = localtime(&rawtime);
     if (timeinfo == NULL)
-        return ret;
+        return;
 
-    strftime(ret, LEN - 1, "%a %d %b %R", timeinfo);
-
-    return ret;
+    strftime(datetime, LEN - 1, "%a %d %b %R", timeinfo);
+    return;
 }
 
 int main(int argc, char *argv[])
@@ -101,7 +98,8 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    char *time;
+    char *datetime = malloc(LEN);
+    datetime[0] = '\0';
     struct syst_stats *sys = malloc(sizeof(struct syst_stats));
     memset(sys, 0, sizeof(struct syst_stats));
     unsigned int GPU_temp;
@@ -110,7 +108,7 @@ int main(int argc, char *argv[])
 
     while (1)
     {
-        time = get_time();
+        set_time(datetime);
         set_sysinfo(sys);
         GPU_temp = get_GPU_temp(&device);
         CPU_temp = get_CPU_temp();
@@ -121,17 +119,15 @@ int main(int argc, char *argv[])
                  GPU_temp,
                  sys->free_ram,
                  sys->load1, sys->load5, sys->load15,
-                 time
+                 datetime
             );
 
         XStoreName(dpy, win, status);
         XFlush(dpy);
 
-        free(time);
         sleep(60);
     }
+    free(time);
     free(sys);
     return 0;
 }
-
-// temp (CPU, GPU), VOLUME
