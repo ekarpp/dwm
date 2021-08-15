@@ -1,3 +1,5 @@
+#include <nvml.h>
+
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -29,6 +31,18 @@ char *get_sysinfo(void)
     return ret;
 }
 
+unsigned int get_GPU_temp(nvmlDevice_t *device)
+{
+    nvmlReturn_t result;
+    unsigned int temp;
+
+    result = nvmlDeviceGetTemperature(*device, NVML_TEMPERATURE_GPU, &temp);
+    if (NVML_SUCCESS != result)
+        return 0;
+
+    return temp;
+}
+
 char *get_time(void)
 {
     time_t rawtime;
@@ -50,31 +64,47 @@ int main(int argc, char *argv[])
 {
     Display *dpy = NULL;
     Window win = 0;
-    size_t length = 0;
-    ssize_t bytes_read = 0;
-    char *input = NULL;
-
     dpy = XOpenDisplay(getenv("DISPLAY"));
     if (dpy == NULL)
     {
         fprintf(stderr, "Can't open display, exiting.\n");
-        exit(1);
+        return 1;
     }
     win = DefaultRootWindow(dpy);
 
+    nvmlReturn_t result;
+    nvmlDevice_t device;
+
+    result = nvmlInit();
+    if(NVML_SUCCESS != result){
+        fprintf(stderr, "failed to initialize nvml \n");
+        return 1;
+    }
+    result = nvmlDeviceGetHandleByIndex(0, &device);
+    if(NVML_SUCCESS != result){
+        fprintf(stderr, "failed to load device \n");
+        return 1;
+    }
+
     char *time;
     char *sys;
+    unsigned int GPU_temp;
     char status[STATUS_LEN];
 
     while (1)
     {
         time = get_time();
         sys = get_sysinfo();
-        snprintf(status, STATUS_LEN - 1, "%s %s", sys, time);
+        GPU_temp = get_GPU_temp(&device);
+        snprintf(status, STATUS_LEN - 1, "%s %s %s",
+                 GPU_temp,
+                 sys, time
+            );
 
         XStoreName(dpy, win, status);
         XFlush(dpy);
 
+        free(GPU_temp);
         free(time);
         free(sys);
         sleep(60);
