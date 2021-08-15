@@ -44,13 +44,15 @@ static const Layout layouts[] = {
 	{ "[M]",      monocle },
 };
 
+//	{ MODKEY|ControlMask,           KEY,      toggleview,     {.ui = 1 << TAG} },
+//	{ MODKEY|ControlMask|ShiftMask, KEY,      toggletag,      {.ui = 1 << TAG} },
+
 /* key definitions */
 #define MODKEY Mod4Mask
+#define ALTMOD MODKEY|ControlMask
 #define TAGKEYS(KEY,TAG) \
 	{ MODKEY,                       KEY,      view,           {.ui = 1 << TAG} }, \
-	{ MODKEY|ControlMask,           KEY,      toggleview,     {.ui = 1 << TAG} }, \
 	{ MODKEY|ShiftMask,             KEY,      tag,            {.ui = 1 << TAG} }, \
-	{ MODKEY|ControlMask|ShiftMask, KEY,      toggletag,      {.ui = 1 << TAG} }, \
         { ALTMOD,                       KEY,      focusnthmon,    {.i  = TAG } }, \
         { ALTMOD|ShiftMask,             KEY,      tagnthmon,      {.i  = TAG } },
 
