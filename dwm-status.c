@@ -16,7 +16,7 @@
 #define LOAD_SCALE 1.0f / (1 << SI_LOAD_SHIFT)
 
 #define REFRESH_RATE 60
-#define CPU_TEMP_FILE "/sys/class/thermal/thermal_zone2/temp"
+#define CPU_TEMP_FILE "/sys/class/thermal/thermal_zone1/temp"
 #define BAT_CAP_FILE "/sys/class/power_supply/BAT0/capacity"
 
 struct syst_stats {
@@ -52,9 +52,9 @@ unsigned int get_GPU_temp(nvmlDevice_t *device)
 }
 #endif
 
-unsigned int get_CPU_temp()
+unsigned int read_uint_file(char *path)
 {
-    FILE *fd = fopen(CPU_TEMP_FILE, "r");
+    FILE *fd = fopen(path, "r");
     if (fd == NULL)
         return 0;
 
@@ -63,7 +63,20 @@ unsigned int get_CPU_temp()
         return 0;
 
     fclose(fd);
-    return atoi(line) / 1000;
+
+    return atoi(line);
+}
+
+#ifdef BAT_EXISTS
+unsigned int get_BAT_cap(void)
+{
+    return read_uint_file(BAT_CAP_FILE);
+}
+#endif
+
+unsigned int get_CPU_temp()
+{
+    return read_uint_file(CPU_TEMP_FILE) / 1000;
 }
 
 void set_time(char *datetime)
@@ -92,7 +105,7 @@ int main(int argc, char *argv[])
     }
     win = DefaultRootWindow(dpy);
 
-    #ifdef NVML_EXISTS
+#ifdef NVML_EXISTS
     nvmlReturn_t result;
     nvmlDevice_t device;
 
@@ -106,28 +119,40 @@ int main(int argc, char *argv[])
         fprintf(stderr, "failed to load device \n");
         return 1;
     }
-    unsigned int GPU_temp;
-    #endif
+#endif
 
-    unsigned int CPU_temp;
     char *datetime = malloc(DATE_LEN);
     datetime[0] = '\0';
     struct syst_stats *sys = malloc(sizeof(struct syst_stats));
     memset(sys, 0, sizeof(struct syst_stats));
+#ifdef NVML_EXISTS
+    unsigned int GPU_temp;
+#endif
+    unsigned int CPU_temp;
+#ifdef BAT_EXISTS
+    unsigned int BAT_cap;
+#endif
     char status[STATUS_LEN];
     int offset = 0;
 
     while (1)
     {
+        offset = 0;
         set_time(datetime);
         set_sysinfo(sys);
         CPU_temp = get_CPU_temp();
 
-        #ifdef NVML_EXISTS
-            GPU_temp = get_GPU_temp(&device);
-            offset = snprintf(status, STATUS_LEN,
-                              "TG: %uC ", GPU_temp);
-        #endif
+#ifdef BAT_EXISTS
+        BAT_cap = get_BAT_cap();
+        offset += snprintf(status + offset, STATUS_LEN - offset,
+                           "B: %u%% ", BAT_cap);
+#endif
+
+#ifdef NVML_EXISTS
+        GPU_temp = get_GPU_temp(&device);
+        offset += snprintf(status, STATUS_LEN - offset,
+                           "TG: %uC ", GPU_temp);
+#endif
 
         snprintf(status + offset, STATUS_LEN - offset,
                  "TC: %uC M: %.2fGiB L: %.2f %.2f %.2f %s",

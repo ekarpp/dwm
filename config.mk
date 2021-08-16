@@ -5,7 +5,11 @@ VERSION = 6.2-custom
 
 ifneq (,$(wildcard /usr/include/nvml.h))
 	NVML = -lnvidia-ml
-	DEFINE = -DNVML_EXISTS
+	DEFINE := ${DEFINE} -DNVML_EXISTS
+endif
+
+ifneq (,$(wildcard /sys/class/power_supply/BAT0/capacity))
+	DEFINE := ${DEFINE} -DBAT_EXISTS
 endif
 
 # paths
