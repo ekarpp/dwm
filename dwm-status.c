@@ -1,4 +1,6 @@
+#ifdef __nvml_nvml_h__
 #include <nvml.h>
+#endif
 
 #include <string.h>
 #include <stdlib.h>
@@ -31,6 +33,7 @@ void set_sysinfo(struct syst_stats *sys)
     sys->load15   = info.loads[2] * LOAD_SCALE;
 }
 
+#ifdef __nvml_nvml_h__
 unsigned int get_GPU_temp(nvmlDevice_t *device)
 {
     nvmlReturn_t result;
@@ -42,6 +45,7 @@ unsigned int get_GPU_temp(nvmlDevice_t *device)
 
     return temp;
 }
+#endif
 
 unsigned int get_CPU_temp()
 {
@@ -84,6 +88,7 @@ int main(int argc, char *argv[])
     }
     win = DefaultRootWindow(dpy);
 
+    #ifdef __nvml_nvml_h__
     nvmlReturn_t result;
     nvmlDevice_t device;
 
@@ -97,31 +102,33 @@ int main(int argc, char *argv[])
         fprintf(stderr, "failed to load device \n");
         return 1;
     }
-
+    unsigned int GPU_temp;
+    #endif
+    unsigned int CPU_temp;
     char *datetime = malloc(LEN);
     datetime[0] = '\0';
     struct syst_stats *sys = malloc(sizeof(struct syst_stats));
     memset(sys, 0, sizeof(struct syst_stats));
-    unsigned int GPU_temp;
-    unsigned int CPU_temp;
     char status[STATUS_LEN];
 
     while (1)
     {
         set_time(datetime);
         set_sysinfo(sys);
-        GPU_temp = get_GPU_temp(&device);
         CPU_temp = get_CPU_temp();
 
         snprintf(status, STATUS_LEN - 1,
-                 "TC: %uC TG: %uC M: %.2fGiB L: %.2f %.2f %.2f %s",
+                 "TC: %uC M: %.2fGiB L: %.2f %.2f %.2f %s",
                  CPU_temp,
-                 GPU_temp,
                  sys->free_ram,
                  sys->load1, sys->load5, sys->load15,
                  datetime
             );
 
+        #ifdef __nvml_nvml_h__
+            GPU_temp = get_GPU_temp(&device);
+
+        #endif
         XStoreName(dpy, win, status);
         XFlush(dpy);
 

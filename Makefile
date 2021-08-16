@@ -26,7 +26,7 @@ dwm: ${OBJ}
 	${CC} -o $@ ${OBJ} ${LDFLAGS}
 
 dwm-status:
-	${CC} -o $@ dwm-status.c ${LDFLAGS} -lnvidia-ml
+	${CC} -o $@ dwm-status.c ${LDFLAGS}
 
 clean:
 	rm -f dwm dwm-status ${OBJ} dwm-${VERSION}.tar.gz config.h
