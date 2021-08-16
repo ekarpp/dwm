@@ -1,4 +1,4 @@
-#ifdef __nvml_nvml_h__
+#ifdef NVML_EXISTS
 #include <nvml.h>
 #endif
 
@@ -12,7 +12,7 @@
 
 #define LEN 64
 #define STATUS_LEN 256
-#define LOAD_SCALE 1.0d / (1 << SI_LOAD_SHIFT)
+#define LOAD_SCALE 1.0f / (1 << SI_LOAD_SHIFT)
 
 struct syst_stats {
     double free_ram; // in GiB
@@ -33,7 +33,7 @@ void set_sysinfo(struct syst_stats *sys)
     sys->load15   = info.loads[2] * LOAD_SCALE;
 }
 
-#ifdef __nvml_nvml_h__
+#ifdef NVML_EXISTS
 unsigned int get_GPU_temp(nvmlDevice_t *device)
 {
     nvmlReturn_t result;
@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
     }
     win = DefaultRootWindow(dpy);
 
-    #ifdef __nvml_nvml_h__
+    #ifdef NVML_EXISTS
     nvmlReturn_t result;
     nvmlDevice_t device;
 
@@ -104,12 +104,14 @@ int main(int argc, char *argv[])
     }
     unsigned int GPU_temp;
     #endif
+
     unsigned int CPU_temp;
     char *datetime = malloc(LEN);
     datetime[0] = '\0';
     struct syst_stats *sys = malloc(sizeof(struct syst_stats));
     memset(sys, 0, sizeof(struct syst_stats));
     char status[STATUS_LEN];
+    int offset = 0;
 
     while (1)
     {
@@ -117,7 +119,13 @@ int main(int argc, char *argv[])
         set_sysinfo(sys);
         CPU_temp = get_CPU_temp();
 
-        snprintf(status, STATUS_LEN - 1,
+        #ifdef NVML_EXISTS
+            GPU_temp = get_GPU_temp(&device);
+            offset = snprintf(status, STATUS_LEN,
+                              "TG: %uC ", GPU_temp);
+        #endif
+
+        snprintf(status + offset, STATUS_LEN - offset,
                  "TC: %uC M: %.2fGiB L: %.2f %.2f %.2f %s",
                  CPU_temp,
                  sys->free_ram,
@@ -125,16 +133,13 @@ int main(int argc, char *argv[])
                  datetime
             );
 
-        #ifdef __nvml_nvml_h__
-            GPU_temp = get_GPU_temp(&device);
-
-        #endif
         XStoreName(dpy, win, status);
         XFlush(dpy);
 
         sleep(60);
     }
-    free(time);
+    XCloseDisplay(dpy);
+    free(datetime);
     free(sys);
     return 0;
 }

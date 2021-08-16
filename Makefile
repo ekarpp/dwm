@@ -26,10 +26,11 @@ dwm: ${OBJ}
 	${CC} -o $@ ${OBJ} ${LDFLAGS}
 
 dwm-status:
-	${CC} -o $@ dwm-status.c ${LDFLAGS}
+	${CC} -c ${CFLAGS} dwm-status.c
+	${CC} -o $@ dwm-status.o ${LDFLAGS}
 
 clean:
-	rm -f dwm dwm-status ${OBJ} dwm-${VERSION}.tar.gz config.h
+	rm -f dwm dwm-status dwm-status.o ${OBJ} dwm-${VERSION}.tar.gz config.h
 
 dist: clean
 	mkdir -p dwm-${VERSION}
