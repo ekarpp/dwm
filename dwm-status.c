@@ -59,6 +59,7 @@ unsigned int get_CPU_temp()
     if (fgets(line, sizeof(line)-1, fd) == NULL)
         return 0;
 
+    fclose(fd);
     return atoi(line) / 1000;
 }
 
