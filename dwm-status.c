@@ -5,14 +5,19 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <sys/sysinfo.h>
 #include <time.h>
 #include <unistd.h>
+
+#include <sys/sysinfo.h>
 #include <X11/Xlib.h>
 
-#define LEN 64
+#define DATE_LEN 64
 #define STATUS_LEN 256
 #define LOAD_SCALE 1.0f / (1 << SI_LOAD_SHIFT)
+
+#define REFRESH_RATE 60
+#define CPU_TEMP_FILE "/sys/class/thermal/thermal_zone2/temp"
+#define BAT_CAP_FILE "/sys/class/power_supply/BAT0/capacity"
 
 struct syst_stats {
     double free_ram; // in GiB
@@ -49,13 +54,11 @@ unsigned int get_GPU_temp(nvmlDevice_t *device)
 
 unsigned int get_CPU_temp()
 {
-    const char *path = "/sys/class/thermal/thermal_zone2/temp";
-    char line[16];
-
-    FILE *fd = fopen(path, "r");
+    FILE *fd = fopen(CPU_TEMP_FILE, "r");
     if (fd == NULL)
         return 0;
 
+    char line[16];
     if (fgets(line, sizeof(line)-1, fd) == NULL)
         return 0;
 
@@ -73,7 +76,7 @@ void set_time(char *datetime)
     if (timeinfo == NULL)
         return;
 
-    strftime(datetime, LEN - 1, "%a %d %b %R", timeinfo);
+    strftime(datetime, DATE_LEN - 1, "%a %d %b %R", timeinfo);
     return;
 }
 
@@ -107,7 +110,7 @@ int main(int argc, char *argv[])
     #endif
 
     unsigned int CPU_temp;
-    char *datetime = malloc(LEN);
+    char *datetime = malloc(DATE_LEN);
     datetime[0] = '\0';
     struct syst_stats *sys = malloc(sizeof(struct syst_stats));
     memset(sys, 0, sizeof(struct syst_stats));
@@ -137,7 +140,7 @@ int main(int argc, char *argv[])
         XStoreName(dpy, win, status);
         XFlush(dpy);
 
-        sleep(60);
+        sleep(REFRESH_RATE);
     }
     XCloseDisplay(dpy);
     free(datetime);
