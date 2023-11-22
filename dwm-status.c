@@ -15,7 +15,7 @@
 #define STATUS_LEN 512
 #define LOAD_SCALE 1.0f / (1 << SI_LOAD_SHIFT)
 
-#define REFRESH_RATE 6
+#define REFRESH_RATE 30
 #define CPU_TEMP_FILE "/sys/class/thermal/thermal_zone1/temp"
 
 #ifdef BAT_EXISTS
