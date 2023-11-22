@@ -8,7 +8,8 @@ ifneq (,$(wildcard /usr/include/nvml.h))
 	DEFINE := ${DEFINE} -DNVML_EXISTS
 endif
 
-ifneq (,$(wildcard /sys/class/power_supply/BAT0/capacity))
+# If AC power source, then has battery (n=2)
+ifneq (,$(wildcard /sys/class/power_supply/AC/online))
 	DEFINE := ${DEFINE} -DBAT_EXISTS
 endif
 

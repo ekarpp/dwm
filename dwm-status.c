@@ -12,12 +12,17 @@
 #include <X11/Xlib.h>
 
 #define DATE_LEN 64
-#define STATUS_LEN 256
+#define STATUS_LEN 512
 #define LOAD_SCALE 1.0f / (1 << SI_LOAD_SHIFT)
 
-#define REFRESH_RATE 60
+#define REFRESH_RATE 6
 #define CPU_TEMP_FILE "/sys/class/thermal/thermal_zone1/temp"
-#define BAT_CAP_FILE "/sys/class/power_supply/BAT0/capacity"
+
+#ifdef BAT_EXISTS
+#define BAT_CAP_TEMPLATE "/sys/class/power_supply/BAT%d/capacity"
+#define BAT_CAP_LEN 256
+char BAT_cap_file[BAT_CAP_LEN];
+#endif
 
 struct syst_stats {
     double free_ram; // in GiB
@@ -39,7 +44,7 @@ void set_sysinfo(struct syst_stats *sys)
 }
 
 #ifdef NVML_EXISTS
-unsigned int get_GPU_temp(nvmlDevice_t *device)
+int get_GPU_temp(nvmlDevice_t *device)
 {
     nvmlReturn_t result;
     unsigned int temp;
@@ -52,15 +57,15 @@ unsigned int get_GPU_temp(nvmlDevice_t *device)
 }
 #endif
 
-unsigned int read_uint_file(char *path)
+int read_int_file(char *path)
 {
     FILE *fd = fopen(path, "r");
     if (fd == NULL)
-        return 0;
+        return -1;
 
     char line[16];
     if (fgets(line, sizeof(line)-1, fd) == NULL)
-        return 0;
+        return -1;
 
     fclose(fd);
 
@@ -68,15 +73,16 @@ unsigned int read_uint_file(char *path)
 }
 
 #ifdef BAT_EXISTS
-unsigned int get_BAT_cap(void)
+int get_BAT_cap(int index)
 {
-    return read_uint_file(BAT_CAP_FILE);
+    snprintf(BAT_cap_file, BAT_CAP_LEN, BAT_CAP_TEMPLATE, index);
+    return read_int_file(BAT_cap_file);
 }
 #endif
 
-unsigned int get_CPU_temp()
+int get_CPU_temp()
 {
-    return read_uint_file(CPU_TEMP_FILE) / 1000;
+    return read_int_file(CPU_TEMP_FILE) / 1000;
 }
 
 void set_time(char *datetime)
@@ -126,13 +132,14 @@ int main(int argc, char *argv[])
     struct syst_stats *sys = malloc(sizeof(struct syst_stats));
     memset(sys, 0, sizeof(struct syst_stats));
 #ifdef NVML_EXISTS
-    unsigned int GPU_temp;
+    int GPU_temp;
 #endif
-    unsigned int CPU_temp;
+    int CPU_temp;
 #ifdef BAT_EXISTS
-    unsigned int BAT_cap;
+    int BAT_cap;
 #endif
     char status[STATUS_LEN];
+
     int offset = 0;
 
     while (1)
@@ -143,9 +150,13 @@ int main(int argc, char *argv[])
         CPU_temp = get_CPU_temp();
 
 #ifdef BAT_EXISTS
-        BAT_cap = get_BAT_cap();
-        offset += snprintf(status + offset, STATUS_LEN - offset,
-                           "B: %u%% ", BAT_cap);
+        int i = 0;
+        while ((BAT_cap = get_BAT_cap(i)) >= 0)
+        {
+            offset += snprintf(status + offset, STATUS_LEN - offset,
+                               "B%d: %d%% ", i, BAT_cap);
+            i++;
+        }
 #endif
 
 #ifdef NVML_EXISTS
