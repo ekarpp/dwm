@@ -23,11 +23,10 @@ config.h:
 	cp config.def.h $@
 
 dwm: ${OBJ}
-	${CC} -o $@ ${OBJ} ${LDFLAGS}
+	${CC} -o $@ $^ ${LDFLAGS}
 
-dwm-status:
-	${CC} -c ${CFLAGS} dwm-status.c
-	${CC} -o $@ dwm-status.o ${LDFLAGS}
+dwm-status: dwm-status.o
+	${CC} -o $@ $^ ${LDFLAGS}
 
 clean:
 	rm -f dwm dwm-status dwm-status.o ${OBJ} dwm-${VERSION}.tar.gz config.h
