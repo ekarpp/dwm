@@ -150,12 +150,10 @@ int main(int argc, char *argv[])
         CPU_temp = get_CPU_temp();
 
 #ifdef BAT_EXISTS
-        int i = 0;
-        while ((BAT_cap = get_BAT_cap(i)) >= 0)
+        for (int i = 0; i < 2; i++)
         {
-            offset += snprintf(status + offset, STATUS_LEN - offset,
-                               "B%d: %d%% ", i, BAT_cap);
-            i++;
+            if ((BAT_cap = get_BAT_cap(i)) >= 0)
+                offset += snprintf(status + offset, STATUS_LEN - offset, "B%d: %d%% ", i, BAT_cap);
         }
 #endif
 
