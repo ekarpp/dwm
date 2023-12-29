@@ -159,7 +159,7 @@ int main(int argc, char *argv[])
 
 #ifdef NVML_EXISTS
         GPU_temp = get_GPU_temp(&device);
-        offset += snprintf(status, STATUS_LEN - offset,
+        offset += snprintf(status + offset, STATUS_LEN - offset,
                            "TG: %u\u00B0C ", GPU_temp);
 #endif
 
