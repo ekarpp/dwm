@@ -51,7 +51,7 @@ and (re)compiling the source code.
 
 Custom modifications
 --------------------
-Configuration changes, selfmade dwm-status.c and following patches applied:
+Configuration changes and following patches applied:
   - https://dwm.suckless.org/patches/pertag/
   - https://dwm.suckless.org/patches/focusmonmouse/
   - https://dwm.suckless.org/patches/accessnthmonitor/
