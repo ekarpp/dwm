@@ -21,7 +21,8 @@ static const char col_green[]       = "#00ff00";
 static const char *colors[][3]      = {
 	/*					fg         bg          border   */
 	[SchemeNorm] =	 { col_gray3, col_gray1,  col_gray2 },
-	[SchemeSel]  =	 { col_gray4, col_green,   col_cyan },
+	[SchemeSel]  =	 { col_gray4, col_cyan,   col_cyan },
+	[SchemeOK]   =	 { col_black, col_green,  col_red },
 	[SchemeWarn] =	 { col_black, col_yellow, col_red },
 	[SchemeUrgent]=	 { col_white, col_red,    col_red },
 };
