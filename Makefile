@@ -6,7 +6,7 @@ include config.mk
 SRC = drw.c dwm.c util.c
 OBJ = ${SRC:.c=.o}
 
-all: options dwm dwm-status
+all: options dwm
 
 options:
 	@echo dwm build options:
@@ -26,7 +26,7 @@ dwm: ${OBJ}
 	${CC} -o $@ $^ ${LDFLAGS}
 
 clean:
-	rm -f dwm dwm-status dwm-status.o ${OBJ} dwm-${VERSION}.tar.gz config.h
+	rm -f dwm ${OBJ} dwm-${VERSION}.tar.gz config.h
 
 dist: clean
 	mkdir -p dwm-${VERSION}
